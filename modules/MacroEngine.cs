@@ -49,12 +49,12 @@ namespace automacro.modules
         private bool _mainLoopBlocked = false;
         private DateTime _mainLoopBlockedUntil = DateTime.MinValue;
         private int _consecutiveHotkeysQueued = 0;
-        private const int MAX_CONSECUTIVE_HOTKEYS = 3; // Process max 3 hotkeys at once
+        private const int MAX_CONSECUTIVE_HOTKEYS = 4; // Process max 4 hotkeys at once
         
         // Hotkey processing settings
         private const int BASE_BLOCK_DURATION = 750; // Base block for 1 hotkey
         private const int EXTRA_BLOCK_PER_HOTKEY = 350; // Additional block per extra hotkey
-        private const int MIN_HOTKEY_GAP = 200; // Minimum gap between consecutive hotkeys
+        private const int MIN_HOTKEY_GAP = 450; // Minimum gap between consecutive hotkeys
         
         public event Action<string> OnLog;
         public event Action<string> OnPauseStateChanged;
@@ -278,8 +278,8 @@ public MacroEngine(AppConfig config, Automacro.Models.ProcessTarget target)
             // Base block for 1 hotkey, plus extra for each additional hotkey
             int blockDuration = BASE_BLOCK_DURATION + (Math.Min(hotkeyCount - 1, MAX_CONSECUTIVE_HOTKEYS - 1) * EXTRA_BLOCK_PER_HOTKEY);
             
-            // Cap at reasonable maximum (e.g., 2000ms for many hotkeys)
-            return Math.Min(blockDuration, 2000);
+            // Cap at reasonable maximum (e.g., 2500ms for many hotkeys)
+            return Math.Min(blockDuration, 2500);
         }
 
         private void QueueHotkeysWithSpacing(List<KeyPressAction> hotkeys, DateTime currentTime)
