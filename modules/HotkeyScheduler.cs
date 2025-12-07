@@ -8,7 +8,7 @@ namespace automacro.modules
     public class HotkeyScheduler
     {
         private readonly Dictionary<string, HotkeyState> _hotkeyStates;
-        private const int HOTKEY_EXECUTION_BUFFER = 50;
+        private const int HOTKEY_EXECUTION_BUFFER = 500;
         
         public event Action<string> OnLog;
         
