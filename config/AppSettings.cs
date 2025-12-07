@@ -41,7 +41,7 @@ namespace automacro.config
                 // Removed debug log
                 return config ?? new AppConfig();
             }
-            catch (Exception ex)
+catch (Exception)
             {
                 // Removed debug log
                 return new AppConfig();
@@ -61,7 +61,7 @@ namespace automacro.config
                 _config = config;
                 // Removed debug log
             }
-            catch (Exception ex)
+catch (Exception)
             {
                 // Removed debug log
             }

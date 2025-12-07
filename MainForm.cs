@@ -120,7 +120,6 @@ monitoringService = new automacro.modules.MonitoringService(_config, _selectedPr
         // Removed unused btnSaveConfig field
         
         private IKeyboardMouseEvents _globalHook;
-        private System.Drawing.Point _pendingMouseCoordinate;
 
         public MainForm()
         {

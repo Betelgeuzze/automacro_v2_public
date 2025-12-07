@@ -54,7 +54,7 @@ namespace automacro.utils
                     // Removed debug log
                 }
             }
-            catch (Exception ex)
+catch (Exception)
             {
                 // Removed debug log
             }
@@ -97,9 +97,9 @@ namespace automacro.utils
                     _coordinator.StopAllSystems();
                 }
             }
-            catch (Exception ex)
+catch (Exception)
             {
-                OnHotkeyTriggered?.Invoke($"F9 Error: {ex.Message}");
+                OnHotkeyTriggered?.Invoke("F9 Error");
             }
         }
 
@@ -113,9 +113,9 @@ namespace automacro.utils
                     _coordinator.StopAllSystems();
                 }
             }
-            catch (Exception ex)
+catch (Exception)
             {
-                OnHotkeyTriggered?.Invoke($"Backslash Error: {ex.Message}");
+                OnHotkeyTriggered?.Invoke("Backslash Error");
             }
         }
 
@@ -150,9 +150,9 @@ private void FocusGameWindow()
                     OnHotkeyTriggered?.Invoke($"Game process not found or has no visible window");
                 }
             }
-            catch (Exception ex)
+catch (Exception)
             {
-                OnHotkeyTriggered?.Invoke($"Warning: Could not focus game window: {ex.Message}");
+                OnHotkeyTriggered?.Invoke("Warning: Could not focus game window");
             }
         }
 
@@ -166,7 +166,7 @@ private void FocusGameWindow()
                     UnregisterHotKey(_handle, HOTKEY_ID_BACKSLASH);
                     // Removed debug log
                 }
-                catch (Exception ex)
+catch (Exception)
                 {
                     // Removed debug log
                 }

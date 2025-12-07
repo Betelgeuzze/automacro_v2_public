@@ -32,8 +32,10 @@ namespace automacro.modules
 
 public class RegionMonitorModule : IRegionMonitorModule, IDisposable
 {
-    public event EventHandler<TemplateMatchedEventArgs> OnTemplateMatched;
-    public event EventHandler<RegionChangedEventArgs> OnRegionChanged;
+public event EventHandler<TemplateMatchedEventArgs> OnTemplateMatched;
+#pragma warning disable CS0067
+public event EventHandler<RegionChangedEventArgs> OnRegionChanged;
+#pragma warning restore CS0067
 
         public void Attach() { /* Attach logic */ }
         public void Detach() { /* Detach logic */ }

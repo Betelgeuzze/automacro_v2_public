@@ -68,7 +68,7 @@ namespace automacro.models
                     // Removed debug log
                 }
             }
-            catch (Exception ex)
+catch (Exception)
             {
                 // Removed debug log
             }

@@ -176,16 +176,16 @@ namespace automacro.modules
                                 }
                             }
                         }
-                        catch (Exception ex)
+catch (Exception)
                         {
                             // Removed debug log
                         }
                     }
                 }
             }
-            catch (Exception ex)
+catch (Exception)
             {
-                Log($"Warning: Could not focus game window: {ex.Message}");
+                Log("Warning: Could not focus game window");
             }
         }
 

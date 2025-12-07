@@ -91,7 +91,7 @@ config.Macro.Hotkeys = new Dictionary<string, HotkeyConfig>(7)
                 // Removed debug log
                 return mergedConfig;
             }
-            catch (Exception e)
+catch (Exception)
             {
                 // Removed debug log
                 return DefaultConfig;
@@ -133,7 +133,7 @@ config.Macro.Hotkeys = new Dictionary<string, HotkeyConfig>(7)
                 // Removed debug log
                 return true;
             }
-            catch (Exception e)
+catch (Exception)
             {
                 // Removed debug log
                 // Removed debug log

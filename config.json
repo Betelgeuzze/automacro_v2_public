@@ -1,0 +1,100 @@
+{
+  "regionX": 590,
+  "regionY": 431,
+  "regionWidth": 741,
+  "regionHeight": 270,
+  "mainLoop": {
+    "key": "d",
+    "interval": 1000,
+    "pressDuration": 100
+  },
+  "macro": {
+    "hotkeys": {
+      "1": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      },
+      "2": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      },
+      "3": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      },
+      "4": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      },
+      "5": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      },
+      "6": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      },
+      "7": {
+        "key": "",
+        "interval": 0,
+        "pressDuration": 0,
+        "enabled": false
+      }
+    },
+    "mainLoopInterval": 1000,
+    "mainLoopKey": "d",
+    "mainKeyPressDuration": 100
+  },
+  "targetGame": {
+    "exe": "MapleStory",
+    "name": "[#] [Noxy005] Ranmelle [#]"
+  },
+  "timing": {
+    "detectInterval": 1000,
+    "detectCooldown": 30,
+    "uiCheckCooldown": 60
+  },
+  "telegram": {
+    "botToken": "",
+    "chatId": "",
+    "enabled": true
+  },
+  "paths": {
+    "resourcesDir": "resources",
+    "templateFile": "popup.png",
+    "uiCheckFile": "ui_check.png"
+  },
+  "searchRegions": {
+    "popup": [
+      600,
+      424,
+      891,
+      1057
+    ],
+    "ui": [
+      754,
+      1008,
+      941,
+      1114
+    ]
+  },
+  "messages": {
+    "gameNotRunning": "VM Game is not running",
+    "popupDetected": "VM Popup detected in game",
+    "uiCheckFailed": "VM UI check failed - Game might be crashed"
+  },
+  "mouseX": 1291,
+  "mouseY": 676
+}

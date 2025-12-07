@@ -173,8 +173,8 @@ public DetectionResult CheckGameState(IntPtr gameWindow)
                 var popupRegion = ListToRectangle(_config.SearchRegions.Popup);
                 var uiRegion = ListToRectangle(_config.SearchRegions.Ui);
 
-                Log($"[DEBUG] popupRegion is null: {popupRegion == null}");
-                Log($"[DEBUG] uiRegion is null: {uiRegion == null}");
+Log($"[DEBUG] popupRegion is null: {false}");
+Log($"[DEBUG] uiRegion is null: {false}");
                 Log($"🔍 Scanning regions (OpenCV):");
                 Log($"   Popup region: {popupRegion}");
                 Log($"   UI region: {uiRegion}");
@@ -324,41 +324,18 @@ uiScreenshot.Dispose();
 
             try
             {
-                // Fast path for supported formats
-                if (bitmap.PixelFormat == PixelFormat.Format24bppRgb ||
-                    bitmap.PixelFormat == PixelFormat.Format32bppArgb ||
-                    bitmap.PixelFormat == PixelFormat.Format32bppPArgb ||
-                    bitmap.PixelFormat == PixelFormat.Format32bppRgb)
-                {
-                    var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-                    var bmpData = bitmap.LockBits(rect, ImageLockMode.ReadOnly, bitmap.PixelFormat);
-
-                    try
-                    {
-                        int channels = Image.GetPixelFormatSize(bitmap.PixelFormat) / 8;
-                        long stride = bmpData.Stride;
-                        var matType = channels == 3 ? MatType.CV_8UC3 : MatType.CV_8UC4;
-
-                        var mat = Mat.FromPixelData(bitmap.Height, bitmap.Width, matType, bmpData.Scan0, stride);
-                        return mat.Clone(); // Clone to avoid referencing unlocked memory
-                    }
-                    finally
-                    {
-                        bitmap.UnlockBits(bmpData);
-                    }
-                }
-                // Fallback for unsupported formats (e.g., 16bpp, 8bpp, etc.)
+                // Always use MemoryStream fallback — safe and compatible
                 using var ms = new MemoryStream();
                 bitmap.Save(ms, ImageFormat.Png);
                 ms.Position = 0;
                 return Mat.FromStream(ms, ImreadModes.Color);
             }
-            catch
+            catch (Exception ex)
             {
+                Log($"❌ Error in BitmapToMat: {ex.Message}");
                 return new Mat();
             }
         }
-
 
         private Rectangle ListToRectangle(List<int> coords)
         {
