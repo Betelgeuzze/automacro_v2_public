@@ -40,7 +40,7 @@ namespace automacro.gui
                     template,
                     threshold,
                     clickCoordinate,
-                    macroEngine
+                        _coordinator?.MacroEngine
                 );
             }
             if (chkAutoClick.Checked)
@@ -56,7 +56,7 @@ namespace automacro.gui
                         : null,
                     0.85f,
                     new System.Drawing.Point(_config.MouseX, _config.MouseY),
-                    macroEngine
+                    _coordinator?.MacroEngine
                 );
                 regionMonitorModule.StartMonitoring();
             }

@@ -9,9 +9,9 @@ namespace automacro.modules
     public class SystemCoordinator
     {
         private readonly AppConfig _config;
-    private readonly MacroEngine _macroEngine;
-    public MacroEngine MacroEngine => _macroEngine;
-        private readonly MonitoringService _monitoringService;
+        private MacroEngine _macroEngine;
+        public MacroEngine MacroEngine => _macroEngine;
+        private MonitoringService _monitoringService;
         
         private bool _isRunning = false;
 
@@ -50,6 +50,22 @@ namespace automacro.modules
 
             _isRunning = true;
 
+            // Always reinitialize MonitoringService and ImageDetector on restart
+            try
+            {
+                _monitoringService?.StopMonitoring();
+            }
+            catch { }
+
+            var processTargetField = _macroEngine.GetType().GetField("_processTarget", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var processTarget = processTargetField?.GetValue(_macroEngine) as Automacro.Models.ProcessTarget;
+            _monitoringService = processTarget != null
+                ? new MonitoringService(_config, processTarget)
+                : new MonitoringService(_config);
+
+            _monitoringService.OnStatusUpdate += (message) => Log($"[MONITOR] {message}");
+            _monitoringService.OnAlert += (alert) => HandleMonitoringAlert(alert);
+
             // Reset UI detection state for double-check logic
             var wasUiDetectedField = _monitoringService.GetType().GetField("_wasUiDetected", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (wasUiDetectedField != null)
@@ -57,14 +73,29 @@ namespace automacro.modules
 
             // Start monitoring first
             _monitoringService.StartMonitoring();
-            
+
             // Small delay before starting macro
             Thread.Sleep(500);
-            
+
             // Start macro
             _macroEngine.Start();
 
             Log("🟢 All systems started");
+        }
+
+        public void ResetAllSystems()
+        {
+            try
+            {
+                _macroEngine?.Stop();
+                _monitoringService?.StopMonitoring();
+                // Do NOT recreate MacroEngine or MonitoringService to avoid breaking references.
+                // Just stop and restart services, preserving event handlers and references.
+            }
+            catch (Exception ex)
+            {
+                Log($"Error resetting systems: {ex.Message}");
+            }
         }
 
         public void StopAllSystems()
@@ -136,8 +167,7 @@ namespace automacro.modules
                 else
                     pauseReason = "Monitoring alert";
                 
-                _macroEngine.Stop();
-                _isRunning = false; // Allow restart after auto-stop
+                StopAllSystems();
                 OnSystemAlert?.Invoke($"Macro auto-stopped: {pauseReason}");
                 
                 Log($"🚨 Monitoring alert handled: {pauseReason}");

@@ -143,11 +143,19 @@ namespace automacro.modules
             {
                 while (_isRunning && !_cancellationToken.Token.IsCancellationRequested)
                 {
+                    if (!_isRunning || _cancellationToken.Token.IsCancellationRequested)
+                    {
+                        break;
+                    }
                     if (!_keyPressQueue.TryDequeue(out var action))
                     {
                         Thread.Sleep(10);
                         continue;
                     }
+
+                    // Double-check running state before sending key
+                    if (!_isRunning || _cancellationToken.Token.IsCancellationRequested)
+                        break;
 
                     // Enforce minimum gap between key presses
                     var currentTime = DateTime.Now;
@@ -160,12 +168,9 @@ namespace automacro.modules
                         Thread.Sleep(waitTime);
                     }
 
-                    // Bring target window to foreground if set
-                    if (TargetWindowHandle != IntPtr.Zero)
-                    {
-                        SetForegroundWindow(TargetWindowHandle);
-                        Thread.Sleep(30); // Give time for window to focus
-                    }
+                    // Double-check again before sending key
+                    if (!_isRunning || _cancellationToken.Token.IsCancellationRequested)
+                        break;
 
                     // Execute key press
                     Log($"⌨️ Pressing {action.Id}: '{action.Key}'");

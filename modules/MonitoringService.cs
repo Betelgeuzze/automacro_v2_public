@@ -64,7 +64,7 @@ namespace automacro.modules
             _cancellationToken = new CancellationTokenSource();
             _monitorThread = new Thread(() =>
             {
-                Log("DEBUG: Entered immediate UI check thread after restart");
+                // Log("DEBUG: Entered immediate UI check thread after restart");
                 // Immediate first check for UI missing after restart
                 try
                 {
@@ -80,16 +80,16 @@ var gameProcess = _processTarget != null && _processTarget.ProcessId != 0
                             Log($"DEBUG: _lastUiAlert={_lastUiAlert}, now={DateTime.Now}, cooldown={_config.Timing.UiCheckCooldown}");
                             if (DateTime.Now - _lastUiAlert > TimeSpan.FromSeconds(_config.Timing.UiCheckCooldown))
                             {
-                                Log("🚨 [DEBUG] About to send UI check failed alert (immediate after restart)");
+                                // Log("🚨 [DEBUG] About to send UI check failed alert (immediate after restart)");
 _ = _telegramBot.SendUiCheckFailedAsync(_config.Telegram, _config.Messages);
-                                Log("🚨 [DEBUG] Sent UI check failed alert (immediate after restart)");
+                                // Log("🚨 [DEBUG] Sent UI check failed alert (immediate after restart)");
                                 _lastUiAlert = DateTime.Now;
-                                Log("DEBUG: Calling OnAlert for UI check failed alert");
+                                // Log("DEBUG: Calling OnAlert for UI check failed alert");
                                 OnAlert?.Invoke("UI check failed alert sent");
                             }
                             else
                             {
-                                Log("DEBUG: Cooldown prevented UI check alert after restart");
+                                // Log("DEBUG: Cooldown prevented UI check alert after restart");
                             }
                         }
                     }
@@ -235,9 +235,9 @@ _ = _telegramBot.SendPopupDetectedAsync(_config.Telegram, _config.Messages);
                     {
                         if (DateTime.Now - _lastUiAlert > TimeSpan.FromSeconds(_config.Timing.UiCheckCooldown))
                         {
-                            Log("🚨 [DEBUG] About to send UI check failed alert (double-checked)");
+                            // Log("🚨 [DEBUG] About to send UI check failed alert (double-checked)");
 _ = _telegramBot.SendUiCheckFailedAsync(_config.Telegram, _config.Messages);
-                            Log("🚨 [DEBUG] Sent UI check failed alert (double-checked)");
+                            // Log("🚨 [DEBUG] Sent UI check failed alert (double-checked)");
                             _lastUiAlert = DateTime.Now;
                             OnAlert?.Invoke("UI check failed alert sent");
                         }

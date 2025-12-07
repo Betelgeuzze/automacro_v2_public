@@ -16,9 +16,9 @@ namespace automacro.gui
         // UI setup and config management moved to MainForm.Config.cs
         // Autoclick logic moved to MainForm.AutoClick.cs
         private Automacro.Models.ProcessTarget _selectedProcessTarget;
-        private automacro.modules.MacroEngine macroEngine;
+        // private automacro.modules.MacroEngine macroEngine;
         private automacro.modules.ImageDetector imageDetector;
-        private automacro.modules.MonitoringService monitoringService;
+        // private automacro.modules.MonitoringService monitoringService;
 
 private void btnSelectProcessTarget_Click(object sender, EventArgs e)
         {
@@ -27,7 +27,7 @@ if (target != null)
             {
                 _selectedProcessTarget = target;
                 txtProcessTarget.Text = target.ToString();
-                macroEngine?.SetProcessTarget(target);
+                _coordinator?.MacroEngine?.SetProcessTarget(target);
 
                 // Update config with selected process info
 if (_config != null && target != null)
@@ -43,8 +43,33 @@ _coordinator = new SystemCoordinator(_config, _selectedProcessTarget);
 _coordinator.OnStatusUpdate += HandleStatusUpdate;
 _coordinator.OnSystemAlert += HandleSystemAlert;
 
-                macroEngine = new automacro.modules.MacroEngine(_config, _selectedProcessTarget);
+                // macroEngine = new automacro.modules.MacroEngine(_config, _selectedProcessTarget);
                 // MacroEngine should only be started/stopped via F9 hotkey, not GUI status
+
+                // Subscribe to macroEngine pause/resume events for status updates
+                if (_coordinator != null && _coordinator.MacroEngine != null)
+                {
+                    _coordinator.MacroEngine.OnPauseStateChanged += (state) =>
+                    {
+                        if (InvokeRequired)
+                        {
+                            Invoke(new Action(() =>
+                            {
+                                if (state == "Resumed")
+                                    statusPanel.UpdateMacroStatus("RUNNING", Color.Green);
+                                else if (state.StartsWith("Paused"))
+                                    statusPanel.UpdateMacroStatus("PAUSED", Color.Orange);
+                            }));
+                        }
+                        else
+                        {
+                            if (state == "Resumed")
+                                statusPanel.UpdateMacroStatus("RUNNING", Color.Green);
+                            else if (state.StartsWith("Paused"))
+                                statusPanel.UpdateMacroStatus("PAUSED", Color.Orange);
+                        }
+                    };
+                }
                 if (regionMonitorModule != null)
                 {
                     // Always update macroEngine reference in regionMonitorModule
@@ -55,7 +80,7 @@ _coordinator.OnSystemAlert += HandleSystemAlert;
                         template: null,
                         threshold: 0.85f,
                         clickCoordinate: new System.Drawing.Point(_config.MouseX, _config.MouseY),
-                        macroEngine: macroEngine
+                        macroEngine: _coordinator?.MacroEngine
                     );
                 }
                 else if (chkAutoClick != null && chkAutoClick.Checked)
@@ -85,7 +110,7 @@ _coordinator.OnSystemAlert += HandleSystemAlert;
                         template,
                         threshold,
                         clickCoordinate,
-                        macroEngine
+                        _coordinator?.MacroEngine
                     );
                     regionMonitorModule.StartMonitoring();
                 }
@@ -96,14 +121,14 @@ _globalHotkeyManager.OnHotkeyTriggered += HandleHotkeyTriggered;
 if (consolePanel == null)
     consolePanel = new ConsolePanel();
 imageDetector = new automacro.modules.ImageDetector(_config, consolePanel);
-monitoringService = new automacro.modules.MonitoringService(_config, _selectedProcessTarget, consolePanel, imageDetector ?? new automacro.modules.ImageDetector(_config, consolePanel));
+            // monitoringService = new automacro.modules.MonitoringService(_config, _selectedProcessTarget, consolePanel, imageDetector ?? new automacro.modules.ImageDetector(_config, consolePanel));
                 }
             }
             else
             {
                 txtProcessTarget.Text = "";
                 _selectedProcessTarget = null;
-                macroEngine?.SetProcessTarget(null);
+                _coordinator?.MacroEngine?.SetProcessTarget(null);
             }
         }
         private SystemCoordinator _coordinator;
@@ -169,7 +194,7 @@ monitoringService = new automacro.modules.MonitoringService(_config, _selectedPr
                 _coordinator.OnStatusUpdate += HandleStatusUpdate;
                 _coordinator.OnSystemAlert += HandleSystemAlert;
 
-                macroEngine = new automacro.modules.MacroEngine(_config);
+                // macroEngine = new automacro.modules.MacroEngine(_config);
 
                 _globalHotkeyManager = new GlobalHotkeyManager(this.Handle, _coordinator);
                 _globalHotkeyManager.OnHotkeyTriggered += HandleHotkeyTriggered;
@@ -195,6 +220,9 @@ monitoringService = new automacro.modules.MonitoringService(_config, _selectedPr
             statusPanel = new StatusPanel();
             // configPanel is initialized in Designer
             telegramConfigPanel = new TelegramConfigPanel();
+
+            // Subscribe to macroEngine pause/resume events for status updates
+            // (macroEngine event subscription removed; handled via _coordinator.MacroEngine)
             messagesConfigPanel = new MessagesConfigPanel();
             consolePanel = new ConsolePanel();
 
@@ -233,11 +261,11 @@ monitoringService = new automacro.modules.MonitoringService(_config, _selectedPr
         private void HandleHotkeyTriggered(string message)
         {
             consolePanel.AppendToLog($"[GLOBAL HOTKEY] {message}");
-            if (macroEngine != null)
+            if (_coordinator != null && _coordinator.MacroEngine != null)
             {
                 if (message.Contains("F9: Starting macro"))
                 {
-                    macroEngine.Start();
+                    _coordinator.MacroEngine.Start();
                     if (regionMonitorModule != null && chkAutoClick != null && chkAutoClick.Checked)
                     {
                         // Update macroEngine reference in regionMonitorModule after macro starts
@@ -252,12 +280,12 @@ monitoringService = new automacro.modules.MonitoringService(_config, _selectedPr
                                 : null,
                             0.85f,
                             new System.Drawing.Point(_config.MouseX, _config.MouseY),
-                            macroEngine
+                            _coordinator.MacroEngine
                         );
                     }
                 }
                 else if (message.Contains("F9: Stopping macro"))
-                    macroEngine.Stop();
+                    _coordinator.MacroEngine.Stop();
             }
         }
         

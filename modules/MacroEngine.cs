@@ -109,6 +109,8 @@ public MacroEngine(AppConfig config, Automacro.Models.ProcessTarget target)
             // Start services
             _keyPressService.Start();
             _windowManager.RefreshGameWindow();
+            // Only focus window once at start
+            FocusGameWindow();
             
             // Reset hotkey timers
             _hotkeyScheduler.ResetAllTimers();
@@ -124,7 +126,7 @@ public MacroEngine(AppConfig config, Automacro.Models.ProcessTarget target)
             Log("🚀 MacroEngine started");
         }
 
-        public void Stop()
+public void Stop()
         {
             if (!_isRunning) return;
             
@@ -133,27 +135,32 @@ public MacroEngine(AppConfig config, Automacro.Models.ProcessTarget target)
             _cancellationToken.Cancel();
             
             // Stop services
+            _keyPressService.ClearQueue(); // Ensure no keypresses after stop
             _keyPressService.Stop();
-            
-            // Wait for thread
-            Thread.Sleep(100);
+
+            // Ensure execution thread fully exits before returning
+            if (_executionThread != null && _executionThread.IsAlive)
+            {
+                _executionThread.Join(2000); // Wait up to 2 seconds for thread to exit
+            }
             
             Log("✅ MacroEngine stopped");
         }
 
-        public void Pause(string reason = "Manual pause")
+public void Pause(string reason = "Manual pause")
         {
-            if (!_isRunning || _isPaused) return;
-            
+            if (!_isRunning || _isPaused)
+                return;
             _isPaused = true;
+            _keyPressService.ClearQueue(); // Ensure no keypresses after pause
             Log($"⏸️ Macro paused: {reason}");
             OnPauseStateChanged?.Invoke($"Paused: {reason}");
         }
 
         public void Resume()
         {
-            if (!_isRunning || !_isPaused) return;
-            
+            if (!_isRunning || !_isPaused)
+                return;
             _isPaused = false;
             Log("▶️ Macro resumed");
             OnPauseStateChanged?.Invoke("Resumed");
@@ -175,19 +182,27 @@ public MacroEngine(AppConfig config, Automacro.Models.ProcessTarget target)
             {
                 while (_isRunning && !_cancellationToken.Token.IsCancellationRequested)
                 {
-                    if (_isPaused)
+                    // Always check focus, even if paused
+                    if (!_windowManager.IsGameFocused())
                     {
+                        if (!_isRunning) continue;
+                        if (!_isPaused)
+                        {
+                            Pause("Game window not focused");
+                        }
+                        Thread.Sleep(200);
+                        continue;
+                    }
+                    else if (_isPaused)
+                    {
+                        Resume();
                         Thread.Sleep(100);
                         continue;
                     }
-                    
-                    // Check window focus, but do not bring to front if not focused
-                    if (!_windowManager.IsGameFocused())
+
+                    if (_isPaused)
                     {
-                        _keyPressService.ClearQueue();
-                        _mainLoopBlocked = false;
-                        _consecutiveHotkeysQueued = 0;
-                        Thread.Sleep(200);
+                        Thread.Sleep(100);
                         continue;
                     }
                     

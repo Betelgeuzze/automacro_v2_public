@@ -102,8 +102,8 @@ catch (Exception ex)
 
 public DetectionResult CheckGameState(IntPtr gameWindow)
         {
-            Log("TEST: Entered CheckGameState");
-            Log($"[{DateTime.Now:HH:mm:ss}] 🎯 CheckGameState called");
+            // Log("TEST: Entered CheckGameState");
+            // Log($"[{DateTime.Now:HH:mm:ss}] 🎯 CheckGameState called");
             Log($"[{DateTime.Now:HH:mm:ss}] 🎯 gameWindow: {gameWindow}");
             Log($"[{DateTime.Now:HH:mm:ss}] 🎯 _templatesLoaded: {_templatesLoaded}");
             Log($"[DEBUG] _config is null: {_config == null}");
@@ -116,7 +116,7 @@ public DetectionResult CheckGameState(IntPtr gameWindow)
             // Fallback initialization to prevent null reference
             if (_config.SearchRegions == null)
             {
-                Log("[DEBUG] Initializing _config.SearchRegions to default");
+                // Log("[DEBUG] Initializing _config.SearchRegions to default");
                 _config.SearchRegions = new automacro.models.SearchRegionsConfig
                 {
                     Popup = new System.Collections.Generic.List<int> { 0, 0, 1920, 1080 },
@@ -125,12 +125,12 @@ public DetectionResult CheckGameState(IntPtr gameWindow)
             }
             if (_config.SearchRegions.Popup == null)
             {
-                Log("[DEBUG] Initializing _config.SearchRegions.Popup to default");
+                // Log("[DEBUG] Initializing _config.SearchRegions.Popup to default");
                 _config.SearchRegions.Popup = new System.Collections.Generic.List<int> { 0, 0, 1920, 1080 };
             }
             if (_config.SearchRegions.Ui == null)
             {
-                Log("[DEBUG] Initializing _config.SearchRegions.Ui to default");
+                // Log("[DEBUG] Initializing _config.SearchRegions.Ui to default");
                 _config.SearchRegions.Ui = new System.Collections.Generic.List<int> { 0, 0, 1920, 1080 };
             }
 
@@ -162,10 +162,10 @@ public DetectionResult CheckGameState(IntPtr gameWindow)
             }
 
             // Extra logging for screenshot and Mat state
-            if (_popupTemplate == null || _popupTemplate.Empty())
-                Log("DEBUG: _popupTemplate is null or empty");
-            if (_uiTemplate == null || _uiTemplate.Empty())
-                Log("DEBUG: _uiTemplate is null or empty");
+            if (_popupTemplate == null || _popupTemplate.Empty() || _uiTemplate == null || _uiTemplate.Empty())
+            {
+                return new DetectionResult { Success = false };
+            }
 
             try
             {
@@ -173,88 +173,61 @@ public DetectionResult CheckGameState(IntPtr gameWindow)
                 var popupRegion = ListToRectangle(_config.SearchRegions.Popup);
                 var uiRegion = ListToRectangle(_config.SearchRegions.Ui);
 
-Log($"[DEBUG] popupRegion is null: {false}");
-Log($"[DEBUG] uiRegion is null: {false}");
-                Log($"🔍 Scanning regions (OpenCV):");
-                Log($"   Popup region: {popupRegion}");
-                Log($"   UI region: {uiRegion}");
-
-                Log("TEST: About to call WindowUtils.CaptureRegion for popup and UI regions");
-                if (gameWindow == IntPtr.Zero)
-                    Log("[DEBUG] gameWindow is zero");
-
                 // Capture both regions
                 Bitmap popupScreenshot = null;
                 Bitmap uiScreenshot = null;
                 try
                 {
                     popupScreenshot = WindowUtils.CaptureRegion(gameWindow, popupRegion, _consolePanel);
-                    Log($"TEST: Called WindowUtils.CaptureRegion for popup, result null: {popupScreenshot == null}");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Log($"❌ Exception in WindowUtils.CaptureRegion (popup): {ex.Message}");
+                    return new DetectionResult { Success = false };
                 }
                 try
                 {
                     uiScreenshot = WindowUtils.CaptureRegion(gameWindow, uiRegion, _consolePanel);
-                    Log($"TEST: Called WindowUtils.CaptureRegion for UI, result null: {uiScreenshot == null}");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Log($"❌ Exception in WindowUtils.CaptureRegion (UI): {ex.Message}");
+                    popupScreenshot?.Dispose();
+                    return new DetectionResult { Success = false };
                 }
 
-if (popupScreenshot == null || uiScreenshot == null)
-{
-    Log("❌ Could not capture screenshots");
-    return new DetectionResult { Success = false };
-}
-else
-{
-    Log($"✅ Captured popup screenshot: {popupScreenshot.Width}x{popupScreenshot.Height}");
-    Log($"✅ Captured UI screenshot: {uiScreenshot.Width}x{uiScreenshot.Height}");
-}
+                if (popupScreenshot == null || uiScreenshot == null)
+                {
+                    popupScreenshot?.Dispose();
+                    uiScreenshot?.Dispose();
+                    return new DetectionResult { Success = false };
+                }
 
-using var popupMatRaw = BitmapToMat(popupScreenshot);
-using var uiMatRaw = BitmapToMat(uiScreenshot);
+                using var popupMatRaw = BitmapToMat(popupScreenshot);
+                using var uiMatRaw = BitmapToMat(uiScreenshot);
 
-Mat popupMat = popupMatRaw;
-Mat uiMat = uiMatRaw;
+                Mat popupMat = popupMatRaw;
+                Mat uiMat = uiMatRaw;
 
-// Convert CV_8UC4 to CV_8UC3 if needed
-if (popupMatRaw.Type() == MatType.CV_8UC4)
-{
-    popupMat = new Mat();
-    Cv2.CvtColor(popupMatRaw, popupMat, ColorConversionCodes.BGRA2BGR);
-}
-if (uiMatRaw.Type() == MatType.CV_8UC4)
-{
-    uiMat = new Mat();
-    Cv2.CvtColor(uiMatRaw, uiMat, ColorConversionCodes.BGRA2BGR);
-}
+                // Convert CV_8UC4 to CV_8UC3 if needed
+                if (popupMatRaw.Type() == MatType.CV_8UC4)
+                {
+                    popupMat = new Mat();
+                    Cv2.CvtColor(popupMatRaw, popupMat, ColorConversionCodes.BGRA2BGR);
+                }
+                if (uiMatRaw.Type() == MatType.CV_8UC4)
+                {
+                    uiMat = new Mat();
+                    Cv2.CvtColor(uiMatRaw, uiMat, ColorConversionCodes.BGRA2BGR);
+                }
 
-Log($"✅ Converted popup Bitmap to Mat: {popupMat.Width}x{popupMat.Height}, Empty={popupMat.Empty()}, Type={popupMat.Type()}");
-Log($"✅ Converted UI Bitmap to Mat: {uiMat.Width}x{uiMat.Height}, Empty={uiMat.Empty()}, Type={uiMat.Type()}");
+                bool popupDetected = false;
+                bool uiDetected = false;
 
-bool popupDetected = false;
-bool uiDetected = false;
+                if (_popupTemplate != null && !_popupTemplate.Empty())
+                    popupDetected = FindTemplateOpenCV(popupMat, _popupTemplate, 0.8f, "Popup");
 
-if (_popupTemplate != null && !_popupTemplate.Empty())
-    popupDetected = FindTemplateOpenCV(popupMat, _popupTemplate, 0.8f, "Popup");
+                if (_uiTemplate != null && !_uiTemplate.Empty())
+                    uiDetected = FindTemplateOpenCV(uiMat, _uiTemplate, 0.7f, "UI");
 
-if (_uiTemplate != null && !_uiTemplate.Empty())
-    uiDetected = FindTemplateOpenCV(uiMat, _uiTemplate, 0.7f, "UI");
-
-// Dispose original screenshots
-popupScreenshot.Dispose();
-uiScreenshot.Dispose();
-
-                Log($"🔍 OpenCV Template Matching Results:");
-                Log($"   Popup Found: {popupDetected}");
-                Log($"   UI Found: {uiDetected}");
-
-                // Clean up Bitmaps
                 popupScreenshot.Dispose();
                 uiScreenshot.Dispose();
 
@@ -266,10 +239,8 @@ uiScreenshot.Dispose();
                     GameRunning = true
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Log($"❌ Error in CheckGameState: {ex.Message}");
-                Log(ex.StackTrace);
                 return new DetectionResult { Success = false };
             }
         }
