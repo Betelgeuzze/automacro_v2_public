@@ -118,9 +118,37 @@ namespace automacro.modules
         public void QueueKeyPress(KeyPressAction action)
         {
             if (!_isRunning) return;
-            
+            action.PressType = KeyPressType.Press;
             _keyPressQueue.Enqueue(action);
             Log($"📥 Queued: {action.Id}='{action.Key}' for {action.Duration}ms");
+        }
+
+        public void QueueKeyDown(string key)
+        {
+            if (!_isRunning) return;
+            _keyPressQueue.Enqueue(new KeyPressAction
+            {
+                Id = "TELEGRAM",
+                Key = key,
+                Duration = 0,
+                DueTime = DateTime.Now,
+                PressType = KeyPressType.Down
+            });
+            Log($"⬇️ KeyDown: {key}");
+        }
+
+        public void QueueKeyUp(string key)
+        {
+            if (!_isRunning) return;
+            _keyPressQueue.Enqueue(new KeyPressAction
+            {
+                Id = "TELEGRAM",
+                Key = key,
+                Duration = 0,
+                DueTime = DateTime.Now,
+                PressType = KeyPressType.Up
+            });
+            Log($"⬆️ KeyUp: {key}");
         }
 
         public void ClearQueue()
@@ -173,9 +201,22 @@ namespace automacro.modules
                         break;
 
                     // Execute key press
-                    Log($"⌨️ Pressing {action.Id}: '{action.Key}'");
-
-                    bool success = PressKeySimple(action.Key, action.Duration);
+                    bool success = true;
+                    if (action.PressType == KeyPressType.Press)
+                    {
+                        Log($"⌨️ Pressing {action.Id}: '{action.Key}'");
+                        success = PressKeySimple(action.Key, action.Duration);
+                    }
+                    else if (action.PressType == KeyPressType.Down)
+                    {
+                        Log($"⬇️ KeyDown: {action.Key}");
+                        PressKeyDown(action.Key);
+                    }
+                    else if (action.PressType == KeyPressType.Up)
+                    {
+                        Log($"⬆️ KeyUp: {action.Key}");
+                        PressKeyUp(action.Key);
+                    }
 
                     if (success)
                     {
@@ -234,6 +275,24 @@ namespace automacro.modules
             SendInput(2, inputs, Marshal.SizeOf(typeof(INPUT)));
         }
 
+        private void PressKeyDown(string key)
+        {
+            ushort scanCode = GetScanCode(key);
+            ushort virtualKey = GetVirtualKey(key);
+
+            INPUT input = CreateKeyboardInput(virtualKey, scanCode, 0);
+            SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
+        }
+
+        private void PressKeyUp(string key)
+        {
+            ushort scanCode = GetScanCode(key);
+            ushort virtualKey = GetVirtualKey(key);
+
+            INPUT input = CreateKeyboardInput(virtualKey, scanCode, KEYEVENTF_KEYUP);
+            SendInput(1, new INPUT[] { input }, Marshal.SizeOf(typeof(INPUT)));
+        }
+
         private INPUT CreateKeyboardInput(ushort virtualKey, ushort scanCode, uint flags)
         {
             return new INPUT
@@ -268,7 +327,20 @@ namespace automacro.modules
                 
                 // Numbers
                 {"0", 0x0B}, {"1", 0x02}, {"2", 0x03}, {"3", 0x04}, {"4", 0x05},
-                {"5", 0x06}, {"6", 0x07}, {"7", 0x08}, {"8", 0x09}, {"9", 0x0A}
+                {"5", 0x06}, {"6", 0x07}, {"7", 0x08}, {"8", 0x09}, {"9", 0x0A},
+
+                // Special keys
+                {"esc", 0x01}, {"escape", 0x01},
+                {"enter", 0x1C}, {"return", 0x1C},
+                {"tab", 0x0F},
+                {"space", 0x39},
+                {"backspace", 0x0E},
+                {"delete", 0x53},
+                {"up", 0x48},
+                {"down", 0x50},
+                {"left", 0x4B},
+                {"right", 0x4D},
+                {"shift", 0x2A}
             };
             
             return scanCodes.ContainsKey(keyLower) ? scanCodes[keyLower] : (ushort)0x1F; // Default to 's'
@@ -289,7 +361,20 @@ namespace automacro.modules
                 
                 // Numbers
                 {"0", 0x30}, {"1", 0x31}, {"2", 0x32}, {"3", 0x33}, {"4", 0x34},
-                {"5", 0x35}, {"6", 0x36}, {"7", 0x37}, {"8", 0x38}, {"9", 0x39}
+                {"5", 0x35}, {"6", 0x36}, {"7", 0x37}, {"8", 0x38}, {"9", 0x39},
+
+                // Special keys
+                {"esc", 0x1B}, {"escape", 0x1B},
+                {"enter", 0x0D}, {"return", 0x0D},
+                {"tab", 0x09},
+                {"space", 0x20},
+                {"backspace", 0x08},
+                {"delete", 0x2E},
+                {"up", 0x26},
+                {"down", 0x28},
+                {"left", 0x25},
+                {"right", 0x27},
+                {"shift", 0x10}
             };
             
             return virtualKeys.ContainsKey(keyLower) ? virtualKeys[keyLower] : (ushort)0x53; // Default to 's'
@@ -313,11 +398,19 @@ namespace automacro.modules
         }
     }
 
+    public enum KeyPressType
+    {
+        Press,
+        Down,
+        Up
+    }
+
     public class KeyPressAction
     {
         public string Id { get; set; } = "";
         public string Key { get; set; } = "";
         public int Duration { get; set; } = 100;
         public DateTime DueTime { get; set; }
+        public KeyPressType PressType { get; set; } = KeyPressType.Press;
     }
 }

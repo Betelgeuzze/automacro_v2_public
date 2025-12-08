@@ -151,6 +151,39 @@ namespace automacro.modules
             return field?.GetValue(_macroEngine) as Automacro.Models.ProcessTarget;
         }
 
+        // Allows updating the process target and reconfiguring internal modules
+        public void UpdateTarget(Automacro.Models.ProcessTarget newTarget)
+        {
+            if (newTarget == null) return;
+
+            // Update MacroEngine
+            if (_macroEngine != null)
+            {
+                _macroEngine.SetProcessTarget(newTarget);
+            }
+            else
+            {
+                _macroEngine = new MacroEngine(_config, newTarget);
+                _macroEngine.OnLog += (message) => Log($"[MACRO] {message}");
+                _macroEngine.OnPauseStateChanged += (state) => Log($"[MACRO] {state}");
+            }
+
+            // Update MonitoringService
+            if (_monitoringService != null)
+            {
+                _monitoringService.StopMonitoring();
+                _monitoringService = new MonitoringService(_config, newTarget);
+                _monitoringService.OnStatusUpdate += (message) => Log($"[MONITOR] {message}");
+                _monitoringService.OnAlert += (alert) => HandleMonitoringAlert(alert);
+            }
+            else
+            {
+                _monitoringService = new MonitoringService(_config, newTarget);
+                _monitoringService.OnStatusUpdate += (message) => Log($"[MONITOR] {message}");
+                _monitoringService.OnAlert += (alert) => HandleMonitoringAlert(alert);
+            }
+        }
+
         private void HandleMonitoringAlert(string alert)
         {
             if (alert.Contains("Popup alert sent") || 

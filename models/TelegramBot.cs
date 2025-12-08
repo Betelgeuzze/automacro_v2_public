@@ -1,21 +1,24 @@
 using System;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using System.Text.Json;
+using Telegram.Bot;
+using Telegram.Bot.Types.Enums;
 
 namespace automacro.models
 {
     public class TelegramBot
     {
-        private readonly HttpClient _httpClient;
-        private readonly string _baseUrl;
+        private readonly ITelegramBotClient _botClient;
 
         public TelegramBot(TelegramConfig config)
         {
-            _httpClient = new HttpClient();
-            _httpClient.Timeout = TimeSpan.FromSeconds(10);
-            _baseUrl = $"https://api.telegram.org/bot{config.BotToken}";
+            if (!string.IsNullOrWhiteSpace(config?.BotToken))
+            {
+                _botClient = new TelegramBotClient(config.BotToken);
+            }
+            else
+            {
+                _botClient = null;
+            }
         }
 
         public async Task SendGameNotRunningAsync(TelegramConfig telegram, MessagesConfig messages)
@@ -44,31 +47,18 @@ namespace automacro.models
 
         private async Task SendMessageAsync(string chatId, string text)
         {
+            if (_botClient == null) return;
             try
             {
-                var payload = new
+                var request = new Telegram.Bot.Requests.SendMessageRequest
                 {
-                    chat_id = chatId,
-                    text = text,
-                    parse_mode = "HTML"
+                    ChatId = chatId,
+                    Text = text,
+                    ParseMode = ParseMode.Html
                 };
-
-                var json = JsonSerializer.Serialize(payload);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                
-                var response = await _httpClient.PostAsync($"{_baseUrl}/sendMessage", content);
-                
-                if (!response.IsSuccessStatusCode)
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    // Removed debug log
-                }
-                else
-                {
-                    // Removed debug log
-                }
+                await _botClient.SendRequest(request, default);
             }
-catch (Exception)
+            catch (Exception)
             {
                 // Removed debug log
             }

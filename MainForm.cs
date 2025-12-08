@@ -1,8 +1,8 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using automacro.config;
 using automacro.models;
+using automacro.config;
 using automacro.modules;
 using automacro.gui.Controls;
 using automacro.utils;
@@ -19,6 +19,7 @@ namespace automacro.gui
         // private automacro.modules.MacroEngine macroEngine;
         private automacro.modules.ImageDetector imageDetector;
         // private automacro.modules.MonitoringService monitoringService;
+        private automacro.models.TelegramCommandReceiver _telegramReceiver;
 
 private void btnSelectProcessTarget_Click(object sender, EventArgs e)
         {
@@ -28,6 +29,7 @@ if (target != null)
                 _selectedProcessTarget = target;
                 txtProcessTarget.Text = target.ToString();
                 _coordinator?.MacroEngine?.SetProcessTarget(target);
+                _telegramReceiver?.SetProcessTarget(target);
 
                 // Update config with selected process info
 if (_config != null && target != null)
@@ -178,10 +180,13 @@ imageDetector = new automacro.modules.ImageDetector(_config, consolePanel);
                 messagesConfigPanel.LoadMessagesConfig(_config.Messages);
 
                 // Require user to select process before running
-                if (_selectedProcessTarget == null)
+                while (_selectedProcessTarget == null)
                 {
                     MessageBox.Show("Please select a process target before using the application.", "Process Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
+                    btnSelectProcessTarget.PerformClick();
+                    // Wait for user to select process
+                    if (_selectedProcessTarget == null)
+                        return;
                 }
 
                 // Load region from config
@@ -201,6 +206,13 @@ imageDetector = new automacro.modules.ImageDetector(_config, consolePanel);
 
                 timerStatusUpdate.Start();
             };
+        }
+
+        public MainForm(automacro.models.TelegramCommandReceiver telegramReceiver, automacro.modules.MacroEngine macroEngine)
+            : this()
+        {
+            _telegramReceiver = telegramReceiver;
+            // Optionally assign macroEngine to a field if needed
         }
         
         // MainForm_Load removed; hotkey manager now initialized in Shown event
