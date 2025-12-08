@@ -23,6 +23,7 @@ namespace automacro
             var telegramConfig = configManager.LoadConfig().Telegram;
             var macroEngine = new automacro.modules.MacroEngine(configManager.LoadConfig());
             var receiver = new automacro.models.TelegramCommandReceiver(telegramConfig.BotToken, telegramConfig.ChatId, macroEngine);
+            receiver.InitializeBotClient(telegramConfig.BotToken);
             var receiverThread = new System.Threading.Thread(() => receiver.Start());
             receiverThread.IsBackground = true;
             receiverThread.Start();

@@ -14,7 +14,7 @@ namespace automacro.models
 
     public class TelegramCommandReceiver
     {
-        private readonly TelegramBotClient _botClient;
+    private TelegramBotClient _botClient;
         private readonly string _chatId;
         private Automacro.Models.ProcessTarget _selectedProcess;
         private automacro.modules.MacroEngine _macroEngine;
@@ -23,11 +23,18 @@ namespace automacro.models
 
     public TelegramCommandReceiver(string botToken, string chatId, automacro.modules.MacroEngine macroEngine = null)
     {
-        _botClient = new TelegramBotClient(botToken);
+        _botClient = null;
         _chatId = chatId;
         _selectedProcess = null;
         _macroEngine = macroEngine;
         _telegramKeySender = new automacro.modules.TelegramKeySender();
+    }
+
+    public void InitializeBotClient(string botToken)
+    {
+        if (!string.IsNullOrEmpty(botToken))
+            _botClient = new TelegramBotClient(botToken);
+        // No error or exception if token is null or empty
     }
 
     private DateTime _startTime;
@@ -47,12 +54,15 @@ namespace automacro.models
             AllowedUpdates = Array.Empty<UpdateType>() // receive all update types
         };
 
-        _botClient.StartReceiving(
-            HandleUpdateAsync,
-            HandleErrorAsync,
-            receiverOptions,
-            cancellationToken: cts.Token
-        );
+        if (_botClient != null)
+        {
+            _botClient.StartReceiving(
+                HandleUpdateAsync,
+                HandleErrorAsync,
+                receiverOptions,
+                cancellationToken: cts.Token
+            );
+        }
 
         // No need for Console.ReadLine() in WinForms; keep running until app exits
         Application.ApplicationExit += (s, e) => cts.Cancel();
@@ -73,15 +83,18 @@ namespace automacro.models
             if (text.ToLower() == "/screenshot")
             {
                 // Take screenshot and send back from memory, no disk write
-                using (var stream = TakeScreenshotToStream())
+                if (_botClient != null)
                 {
-                    var photoRequest = new Telegram.Bot.Requests.SendPhotoRequest
+                    using (var stream = TakeScreenshotToStream())
                     {
-                        ChatId = message.Chat.Id,
-                        Photo = stream,
-                        Caption = "Here is your screenshot"
-                    };
-                    await bot.SendRequest(photoRequest, cancellationToken);
+                        var photoRequest = new Telegram.Bot.Requests.SendPhotoRequest
+                        {
+                            ChatId = message.Chat.Id,
+                            Photo = stream,
+                            Caption = "Here is your screenshot"
+                        };
+                        await bot.SendRequest(photoRequest, cancellationToken);
+                    }
                 }
             }
             else if (text.ToLower().StartsWith("/sendkey"))
@@ -97,7 +110,8 @@ namespace automacro.models
                         ChatId = message.Chat.Id,
                         Text = $"Sent key: {key}"
                     };
-                    await bot.SendRequest(textRequest, cancellationToken);
+                    if (_botClient != null)
+                        await bot.SendRequest(textRequest, cancellationToken);
                 }
                 else
                 {

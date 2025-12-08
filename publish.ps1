@@ -18,8 +18,8 @@ Write-Host "🚀 Publishing optimized single-file build (no trimming)..."
 dotnet publish -c Release -r win-x64 `
     --self-contained true `
     /p:PublishSingleFile=true `
+    /p:IncludeNativeLibrariesForSelfExtract=true `
     /p:EnableCompressionInSingleFile=true `
-    /p:IncludeNativeLibrariesForSelfExtract=true
 # Note: For ILLink attributes, edit your .csproj to use <AssemblyTrimMode> and [DynamicDependency] as needed.
 
 if ($LASTEXITCODE -eq 0) {
