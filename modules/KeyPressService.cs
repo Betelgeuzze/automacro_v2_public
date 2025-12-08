@@ -169,7 +169,7 @@ namespace automacro.modules
         {
             try
             {
-                while (_isRunning && !_cancellationToken.Token.IsCancellationRequested)
+                while (_isRunning && !_cancellationToken.Token.IsCancellationRequested && !automacro.AppState.IsShuttingDown)
                 {
                     if (!_isRunning || _cancellationToken.Token.IsCancellationRequested)
                     {

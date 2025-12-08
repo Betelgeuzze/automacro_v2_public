@@ -138,7 +138,7 @@ _ = _telegramBot.SendUiCheckFailedAsync(_config.Telegram, _config.Messages);
 
         private void MonitorLoop()
         {
-            while (_isMonitoring && !(_cancellationToken.Token.IsCancellationRequested))
+            while (_isMonitoring && !(_cancellationToken.Token.IsCancellationRequested) && !automacro.AppState.IsShuttingDown)
             {
                 try
                 {

@@ -34,14 +34,21 @@ namespace automacro.gui.Controls
         
         public void AppendToLog(string message)
         {
+            if (this.IsDisposed || !this.IsHandleCreated || automacro.AppState.IsShuttingDown)
+                return;
+
             if (txtConsole.InvokeRequired)
             {
                 txtConsole.Invoke(new Action(() => AppendToLog(message)));
                 return;
             }
-            
-            txtConsole.AppendText($"{message}{Environment.NewLine}");
-            txtConsole.ScrollToCaret();
+
+            try
+            {
+                txtConsole.AppendText($"{message}{Environment.NewLine}");
+                txtConsole.ScrollToCaret();
+            }
+            catch { }
         }
         
         public void ClearLog()

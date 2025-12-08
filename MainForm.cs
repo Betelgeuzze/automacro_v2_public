@@ -412,14 +412,32 @@ var gameProcess = _selectedProcessTarget != null && _selectedProcessTarget.Proce
         
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            // Dispose background threads asynchronously to avoid UI hang
-            System.Threading.Tasks.Task.Run(() =>
-            {
-                _coordinator.StopAllSystems();
-                _globalHotkeyManager?.Dispose();
-            });
-            timerStatusUpdate.Stop();
+            automacro.AppState.IsShuttingDown = true;
+
+            // Stop all background systems
+            try { _coordinator?.StopAllSystems(); } catch { }
+            try { _globalHotkeyManager?.Dispose(); } catch { }
+            try { timerStatusUpdate?.Stop(); } catch { }
+
+            // Give background threads time to exit cleanly
+            System.Threading.Thread.Sleep(100);
+
             base.OnFormClosing(e);
+        }
+
+        public void SafeInvoke(Action action)
+        {
+            if (this.IsDisposed || !this.IsHandleCreated || automacro.AppState.IsShuttingDown)
+                return;
+
+            try
+            {
+                if (InvokeRequired)
+                    BeginInvoke(action);
+                else
+                    action();
+            }
+            catch { }
         }
         
         private void tabControl1_SelectedIndexChanged(object sender, EventArgs e) { }

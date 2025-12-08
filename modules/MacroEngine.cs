@@ -180,7 +180,7 @@ public void Pause(string reason = "Manual pause")
             
             try
             {
-                while (_isRunning && !_cancellationToken.Token.IsCancellationRequested)
+                while (_isRunning && !_cancellationToken.Token.IsCancellationRequested && !automacro.AppState.IsShuttingDown)
                 {
                     // Always check focus, even if paused
                     if (!_windowManager.IsGameFocused())
